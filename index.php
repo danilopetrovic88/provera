@@ -46,7 +46,7 @@ class Company {
         return self::$instance;
     }
 
-    public function addSectors(Sector $sector, $num) {
+    public function addSectors($sector, $num) {
         for ($i=0; $i < $num; $i++) { 
             $this->sectors[] = $sector;
         }
@@ -56,7 +56,7 @@ class Company {
         return $this->sectors;
     }
 
-    public function findSector(string $sectorToFind) {
+    public function findSector($sectorToFind) {
         foreach ($this->sectors as $sector) {
             if($sector->getSectorName() == $sectorToFind) {
                 return $sector;
@@ -81,15 +81,14 @@ abstract class Sector {
     }
 
     public function addEmployee($employee, $num) {
-        // $this->employees[] = $employee;
         for ($i=0; $i < $num; $i++) { 
             $this->employees[] = $employee;
        }
     }
 
-    public function addProductToLager($productName, $quantity) {
+    public function addProductToLager($product, $quantity) {
        for ($i=0; $i < $quantity; $i++) { 
-            $this->productsLager[] = $productName;
+            $this->productsLager[] = ProductFactory::createProduct($product);
        }
     }
 }
@@ -100,6 +99,7 @@ class Employee {
 
 class Buyer {
     private $buyerName;
+    public $buyerProducts = [];
 
     public function __construct($buyerName){
         $this->buyerName = $buyerName;
@@ -109,8 +109,9 @@ class Buyer {
         return $this->buyerName;
     }
 
-    public function buyProduct($productName) {
-        echo "Kupac $this->buyerName je kupio proizvod ". $productName ."<br/>";
+    public function buyProduct($product, $marketPlace) {  
+        $marketPlace->sellProduct($product);
+        return $product;
     }
 }
 
@@ -176,14 +177,12 @@ class MarketPlace extends Sector implements DressCodeInterface, WorkHoursInterfa
         return $this->workHours;
     }
 
-    public function sellProduct($productName, $buyer) {
-        if($this->productsLager != 0 && $productName instanceof Product ) {
-            foreach ($this->productsLager as $product) {
-                $buyer->buyProduct($product->getProductName());
+    public function sellProduct($product) { 
+        foreach ($this->productsLager as $prodId => $prod) {
+            if($prod->getProductName() == $product) {
+                echo "Kupac je kupio proizvod {$prod->getProductName()}";
                 break;
             }
-
-            echo "Trenutno nema tog proizvoda na stanju <br/>";
         }
     }
 }
@@ -203,6 +202,7 @@ class ProcurementDep extends Sector implements MeetingsInterface {
 
 class MarketingDep extends Sector implements DressCodeInterface, MeetingsInterface {
     private $dressCode;
+    private $meetings = [];
 
     public function dressCode($msg)
     {
@@ -260,10 +260,12 @@ $benComputersCompany->findSector('marketingDep')->addEmployee(Employee::class, 2
 
 $buyer = new Buyer('Danilo');
 
-$buyer->buyProduct('keyboard');
+$buyer->buyProduct('keyboard', $benComputersCompany->findSector('marketPlace'));
+
 
 
 echo "<pre>";
-// var_dump($benComputersCompany);
 echo "</pre>";
+
+
 
